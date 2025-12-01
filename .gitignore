@@ -33,6 +33,7 @@ yarn-error.*
 # local env files
 .env*.local
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 # typescript
 *.tsbuildinfo
@@ -40,11 +41,16 @@ yarn-error.*
 app-example
 
 =======
+=======
+>>>>>>> 6e5b152 (Khoi tao du an Mobile Admin)
 .env
 # typescript
 *.tsbuildinfo
 
+<<<<<<< HEAD
 >>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5
+=======
+>>>>>>> 6e5b152 (Khoi tao du an Mobile Admin)
 # generated native folders
 /ios
 /android

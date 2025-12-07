@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // app/index.tsx
 
 import { loginAdmin } from 'app/src/services/user.service';
@@ -139,3 +140,16 @@ const styles = StyleSheet.create({
         marginTop: 10,
     }
 });
+=======
+// app/index.js
+
+import { Redirect } from 'expo-router';
+import React from 'react';
+
+// Vì chúng ta đang kiểm tra giao diện Admin trước, 
+// chúng ta bỏ qua việc check Auth và Redirect thẳng đến Admin Group
+export default function StartScreen() {
+    // Redirect thẳng đến Admin Group
+    return <Redirect href="/admin" />; 
+}
+>>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5

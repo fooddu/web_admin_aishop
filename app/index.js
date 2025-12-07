@@ -1,4 +1,8 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> ff7c27f401df9bb9d09593896f6d515041c4f035
 // app/index.tsx
 
 import { loginAdmin } from 'app/src/services/user.service';
@@ -141,6 +145,11 @@ const styles = StyleSheet.create({
     }
 });
 =======
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> 6e5b152 (Khoi tao du an Mobile Admin)
+>>>>>>> ff7c27f401df9bb9d09593896f6d515041c4f035
 // app/index.js
 
 import { Redirect } from 'expo-router';
@@ -151,5 +160,14 @@ import React from 'react';
 export default function StartScreen() {
     // Redirect thẳng đến Admin Group
     return <Redirect href="/admin" />; 
+<<<<<<< HEAD
 }
 >>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5
+=======
+<<<<<<< HEAD
+}
+>>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5
+=======
+}
+>>>>>>> 6e5b152 (Khoi tao du an Mobile Admin)
+>>>>>>> ff7c27f401df9bb9d09593896f6d515041c4f035

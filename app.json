@@ -1,5 +1,6 @@
 {
   "expo": {
+<<<<<<< HEAD
     "name": "admin_aishop",
     "slug": "admin_aishop",
     "version": "1.0.0",
@@ -8,20 +9,40 @@
     "scheme": "adminaishop",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+=======
+    "name": "mobile-admin-app",
+    "slug": "mobile-admin-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+>>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
+<<<<<<< HEAD
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
+=======
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+>>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
+<<<<<<< HEAD
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
@@ -44,6 +65,9 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+=======
+      "favicon": "./assets/favicon.png"
+>>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5
     }
   }
 }

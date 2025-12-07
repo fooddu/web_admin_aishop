@@ -1,6 +1,7 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
+<<<<<<< HEAD
     "strict": true,
     "baseUrl": ".", // Bổ sung baseUrl để đảm bảo paths hoạt động
     "paths": {
@@ -19,3 +20,8 @@
     "expo-env.d.ts"
   ]
 }
+=======
+    "strict": true
+  }
+}
+>>>>>>> 6e5b152bc18a7ea5ba69c98c504b19dbac81d4f5

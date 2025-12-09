@@ -31,10 +31,74 @@ const DashboardScreen = () => {
       labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
       datasets: [{ data: [0, 0, 0, 0, 0, 0] }]
   });
+  const [orderChartData, setOrderChartData] = useState({
+      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      datasets: [{ data: [0, 0, 0, 0, 0, 0] }]
+  });
+  const [userChartData, setUserChartData] = useState({
+      labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+      datasets: [{ data: [0, 0, 0, 0, 0, 0] }]
+  });
   
   const [filterType, setFilterType] = useState('year'); // Mặc định xem theo Năm
   const [loading, setLoading] = useState(true);
   const [chartLoading, setChartLoading] = useState(false);
+  const [orderChartLoading, setOrderChartLoading] = useState(false);
+  const [userChartLoading, setUserChartLoading] = useState(false);
+
+  // --- LOGIC: Xử lý dữ liệu thô thành dữ liệu Biểu đồ ---
+  const transformAnalyticsToChart = (data, type) => {
+      let labels = [];
+      let values = [];
+
+      if (type === 'year') {
+          // Năm: Labels là tháng 1 -> 12
+          labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          values = new Array(12).fill(0);
+          
+          data.forEach(item => {
+              // item._id là số tháng (1-12) -> index mảng là (item._id - 1)
+              if (item._id >= 1 && item._id <= 12) {
+                  values[item._id - 1] = item.totalSales ?? item.totalOrders ?? item.totalUsers ?? 0; 
+              }
+          });
+      } 
+      else if (type === 'week') {
+          // Tuần: Hiển thị Ngày/Tháng
+          data.forEach(item => {
+              // item._id dạng "2023-10-25" -> Lấy "25/10"
+              const datePart = item._id.split('-'); 
+              if (datePart.length === 3) {
+                  labels.push(`${datePart[2]}/${datePart[1]}`);
+                  values.push(item.totalSales ?? item.totalOrders ?? item.totalUsers ?? 0);
+              }
+          });
+      }
+      else {
+          // Month (ngày trong tháng) hoặc Day (giờ trong ngày)
+           data.forEach(item => {
+              if (type === 'day') {
+                   labels.push(`${item._id}h`); // Giờ
+              } else {
+                  // item._id dạng "2023-10-25" -> Lấy ngày "25"
+                  const d = item._id.split('-');
+                  labels.push(d[2]); 
+              }
+              values.push(item.totalSales ?? item.totalOrders ?? item.totalUsers ?? 0);
+          });
+      }
+
+      // Nếu dữ liệu rỗng (để tránh lỗi crash chart)
+      if (labels.length === 0) {
+          labels = ["No Data"];
+          values = [0];
+      }
+
+      return {
+          labels: labels,
+          datasets: [{ data: values }]
+      };
+  };
 
   // --- API 1: Lấy số liệu tổng quan (Cards) ---
   const fetchDashboardStats = async () => {
@@ -74,7 +138,7 @@ const DashboardScreen = () => {
           const res = await response.json();
           
           if (res.success) {
-              processChartData(res.data, type);
+              setChartData(transformAnalyticsToChart(res.data, type));
           }
       } catch (err) { 
           console.error('Lỗi Chart:', err); 
@@ -83,58 +147,48 @@ const DashboardScreen = () => {
       }
   };
 
-  // --- LOGIC: Xử lý dữ liệu thô thành dữ liệu Biểu đồ ---
-  const processChartData = (data, type) => {
-      let labels = [];
-      let values = [];
-
-      if (type === 'year') {
-          // Năm: Labels là tháng 1 -> 12
-          labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-          values = new Array(12).fill(0);
-          
-          data.forEach(item => {
-              // item._id là số tháng (1-12) -> index mảng là (item._id - 1)
-              if (item._id >= 1 && item._id <= 12) {
-                  values[item._id - 1] = item.totalSales; 
-              }
+  // --- API 3: Lấy dữ liệu biểu đồ SỐ LƯỢNG ĐƠN ---
+  const fetchOrderChartData = async (type) => {
+      setOrderChartLoading(true);
+      try {
+          const token = await AsyncStorage.getItem('token');
+          const response = await fetch(`${API_BASE_URL}/orders/get/order-analytics?type=${type}`, {
+              headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}` 
+              },
           });
-      } 
-      else if (type === 'week') {
-          // Tuần: Hiển thị Ngày/Tháng
-          data.forEach(item => {
-              // item._id dạng "2023-10-25" -> Lấy "25/10"
-              const datePart = item._id.split('-'); 
-              if (datePart.length === 3) {
-                  labels.push(`${datePart[2]}/${datePart[1]}`);
-                  values.push(item.totalSales);
-              }
-          });
+          const res = await response.json();
+          if (res.success) {
+              setOrderChartData(transformAnalyticsToChart(res.data, type));
+          }
+      } catch (err) {
+          console.error('Lỗi Order Chart:', err);
+      } finally {
+          setOrderChartLoading(false);
       }
-      else {
-          // Month (ngày trong tháng) hoặc Day (giờ trong ngày)
-           data.forEach(item => {
-              if (type === 'day') {
-                   labels.push(`${item._id}h`); // Giờ
-              } else {
-                  // item._id dạng "2023-10-25" -> Lấy ngày "25"
-                  const d = item._id.split('-');
-                  labels.push(d[2]); 
-              }
-              values.push(item.totalSales);
-          });
-      }
+  };
 
-      // Nếu dữ liệu rỗng (để tránh lỗi crash chart)
-      if (labels.length === 0) {
-          labels = ["No Data"];
-          values = [0];
+  // --- API 4: Lấy dữ liệu biểu đồ USER MỚI ---
+  const fetchUserChartData = async (type) => {
+      setUserChartLoading(true);
+      try {
+          const token = await AsyncStorage.getItem('token');
+          const response = await fetch(`${API_BASE_URL}/users/get/analytics?type=${type}`, {
+              headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}` 
+              },
+          });
+          const res = await response.json();
+          if (res.success) {
+              setUserChartData(transformAnalyticsToChart(res.data, type));
+          }
+      } catch (err) {
+          console.error('Lỗi User Chart:', err);
+      } finally {
+          setUserChartLoading(false);
       }
-
-      setChartData({
-          labels: labels,
-          datasets: [{ data: values }]
-      });
   };
 
   // --- USE EFFECTS ---
@@ -145,6 +199,8 @@ const DashboardScreen = () => {
   // Gọi lại API biểu đồ mỗi khi đổi bộ lọc
   useEffect(() => {
       fetchChartData(filterType);
+      fetchOrderChartData(filterType);
+      fetchUserChartData(filterType);
   }, [filterType]);
 
   // --- UI Component con: Nút Lọc ---
@@ -239,6 +295,92 @@ const DashboardScreen = () => {
                         propsForDots: { r: "5", strokeWidth: "2", stroke: "#ffa726" }
                     }}
                     bezier // Đường cong mềm mại
+                    style={{ marginVertical: 8, borderRadius: 16 }}
+                />
+              </ScrollView>
+          )}
+      </View>
+
+      {/* 3. BIỂU ĐỒ SỐ LƯỢNG ĐƠN HÀNG */}
+      <View style={styles.chartContainer}>
+          <View style={styles.chartHeader}>
+              <Text style={styles.chartTitle}>Order Volume</Text>
+              <View style={styles.filterContainer}>
+                  <FilterButton title="Day" value="day" />
+                  <FilterButton title="Week" value="week" />
+                  <FilterButton title="Month" value="month" />
+                  <FilterButton title="Year" value="year" />
+              </View>
+          </View>
+
+          {orderChartLoading ? (
+              <View style={{height: 220, justifyContent: 'center'}}>
+                  <ActivityIndicator color={COLORS.primary} />
+              </View>
+          ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <LineChart
+                    data={orderChartData}
+                    width={Math.max(screenWidth - 60, orderChartData.labels.length * 50)} 
+                    height={220}
+                    yAxisLabel="" 
+                    fromZero={true}
+                    segments={4}
+                    formatYLabel={(value) => Math.floor(value).toLocaleString()}
+                    chartConfig={{
+                        backgroundColor: "#ffffff",
+                        backgroundGradientFrom: "#ffffff",
+                        backgroundGradientTo: "#ffffff",
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(16, 185, 129, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                        style: { borderRadius: 16 },
+                        propsForDots: { r: "5", strokeWidth: "2", stroke: "#10b981" }
+                    }}
+                    bezier
+                    style={{ marginVertical: 8, borderRadius: 16 }}
+                />
+              </ScrollView>
+          )}
+      </View>
+
+      {/* 4. BIỂU ĐỒ USER MỚI */}
+      <View style={styles.chartContainer}>
+          <View style={styles.chartHeader}>
+              <Text style={styles.chartTitle}>New Users</Text>
+              <View style={styles.filterContainer}>
+                  <FilterButton title="Day" value="day" />
+                  <FilterButton title="Week" value="week" />
+                  <FilterButton title="Month" value="month" />
+                  <FilterButton title="Year" value="year" />
+              </View>
+          </View>
+
+          {userChartLoading ? (
+              <View style={{height: 220, justifyContent: 'center'}}>
+                  <ActivityIndicator color={COLORS.primary} />
+              </View>
+          ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <LineChart
+                    data={userChartData}
+                    width={Math.max(screenWidth - 60, userChartData.labels.length * 50)} 
+                    height={220}
+                    yAxisLabel="" 
+                    fromZero={true}
+                    segments={4}
+                    formatYLabel={(value) => Math.floor(value).toLocaleString()}
+                    chartConfig={{
+                        backgroundColor: "#ffffff",
+                        backgroundGradientFrom: "#ffffff",
+                        backgroundGradientTo: "#ffffff",
+                        decimalPlaces: 0,
+                        color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
+                        labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                        style: { borderRadius: 16 },
+                        propsForDots: { r: "5", strokeWidth: "2", stroke: "#3b82f6" }
+                    }}
+                    bezier
                     style={{ marginVertical: 8, borderRadius: 16 }}
                 />
               </ScrollView>

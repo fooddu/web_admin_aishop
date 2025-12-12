@@ -1,141 +1,107 @@
-// app/index.tsx
-
-import { loginAdmin } from 'app/src/services/user.service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { ActivityIndicator, Alert, Button, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Eye, EyeOff, Lock, LogIn, Mail } from 'lucide-react-native';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator, Alert, Keyboard, KeyboardAvoidingView, Platform,
+    SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity,
+    TouchableWithoutFeedback, View
+} from 'react-native';
+// Đảm bảo đường dẫn import đúng file service bên dưới
+import { loginAdmin } from './src/services/user.service';
 
 export default function LoginScreen() {
     const router = useRouter();
-    const [email, setEmail] = useState('phuclv272@gmail.com'); 
-    const [password, setPassword] = useState('Aa@111111'); 
+    const [email, setEmail] = useState('phuclv272@gmail.com');
+    const [password, setPassword] = useState('Aa@111111');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
 
     const handleLogin = async () => {
-        if (!email || !password) {
-            Alert.alert('Lỗi', 'Vui lòng nhập Email và Mật khẩu.');
+        Keyboard.dismiss();
+        if (!email.trim() || !password.trim()) {
+            Alert.alert('Thông báo', 'Vui lòng nhập đầy đủ Email và Mật khẩu.');
             return;
         }
 
         setIsLoading(true);
 
-        // ⭐️ DEBUG 1: Dữ liệu gửi đi ⭐️
-        console.log('⚡️ [RN DEBUG] Gửi yêu cầu Đăng nhập với:', { 
-            email, 
-            password: password.length > 0 ? '[Mật khẩu đã nhập]' : '[Mật khẩu rỗng]' 
-        });
-
         try {
-            // ⭐️ GỌI HÀM SERVICE ĐĂNG NHẬP ADMIN ⭐️
             const response = await loginAdmin(email, password);
-            
-            const { token, user } = response;
-            
-            // ⭐️ DEBUG 2: Phản hồi thành công ⭐️
-            console.log('✅ [RN DEBUG] Đăng nhập THÀNH CÔNG.');
-            console.log('✅ [RN DEBUG] User Name:', user.name);
-            console.log('✅ [RN DEBUG] Token (một phần):', token.substring(0, 15) + '...');
-            
-            Alert.alert('Thành công', `Chào mừng Admin: ${user.name}!`);
-            
-            router.replace('/admin/');
+
+            if (!response || !response.token || !response.user) {
+                throw new Error('Dữ liệu phản hồi không hợp lệ.');
+            }
+
+            // LƯU STORAGE
+            await AsyncStorage.multiSet([
+                ['token', response.token],
+                ['user', JSON.stringify(response.user)]
+            ]);
+
+            router.replace('/admin/dashboard'); 
 
         } catch (error) {
-            // ⭐️ DEBUG 3: Xử lý lỗi từ API ⭐️
-            const errorMessage = error.message || 'Lỗi không xác định.';
-            console.error('❌ [RN DEBUG] LỖI Đăng nhập Client:', errorMessage);
-            console.error('❌ [RN DEBUG] Chi tiết lỗi:', error); // Log toàn bộ đối tượng lỗi
-            
-            Alert.alert('Lỗi Đăng nhập', errorMessage);
+            console.error('Login Error:', error);
+            const msg = error.message || 'Đăng nhập thất bại.';
+            Alert.alert('Rất tiếc', msg);
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        // ... (Không thay đổi phần UI)
-        <SafeAreaView style={styles.container}>
-            <View style={styles.card}>
-                <Text style={styles.title}>Admin Shop AI</Text>
-                <Text style={styles.subtitle}>Vui lòng đăng nhập để tiếp tục</Text>
-                
-                {/* Form Đăng nhập */}
-                <TextInput
-                    style={styles.input}
-                    placeholder="Email"
-                    placeholderTextColor="#999"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    editable={!isLoading} 
-                />
-                <TextInput
-                    style={styles.input}
-                    placeholder="Mật khẩu"
-                    placeholderTextColor="#999"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    editable={!isLoading} 
-                />
-
-                <View style={styles.buttonContainer}>
-                    {isLoading ? (
-                        <ActivityIndicator size="large" color="#5B7C99" />
-                    ) : (
-                        <Button title="ĐĂNG NHẬP" color="#5B7C99" onPress={handleLogin} />
-                    )}
-                </View>
-                
-            </View>
-        </SafeAreaView>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <SafeAreaView style={styles.container}>
+                <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
+                    <View style={styles.logoContainer}>
+                        <View style={styles.logoCircle}><LogIn size={40} color="#fff" /></View>
+                        <Text style={styles.appName}>AL-SHOP ADMIN</Text>
+                        <Text style={styles.welcomeText}>Welcome back, Administrator!</Text>
+                    </View>
+                    <View style={styles.formContainer}>
+                        <View style={styles.inputWrapper}>
+                            <Text style={styles.label}>Email Address</Text>
+                            <View style={styles.inputContainer}>
+                                <Mail size={20} color="#64748b" style={styles.inputIcon} />
+                                <TextInput style={styles.input} placeholder="name@example.com" placeholderTextColor="#94a3b8" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" editable={!isLoading} />
+                            </View>
+                        </View>
+                        <View style={styles.inputWrapper}>
+                            <Text style={styles.label}>Password</Text>
+                            <View style={styles.inputContainer}>
+                                <Lock size={20} color="#64748b" style={styles.inputIcon} />
+                                <TextInput style={styles.input} placeholder="Enter password" placeholderTextColor="#94a3b8" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} editable={!isLoading} />
+                                <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIcon}>
+                                    {showPassword ? <Eye size={20} color="#64748b" /> : <EyeOff size={20} color="#64748b" />}
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                        <TouchableOpacity style={[styles.loginBtn, isLoading && styles.disabledBtn]} onPress={handleLogin} disabled={isLoading}>
+                            {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.loginBtnText}>LOGIN</Text>}
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </TouchableWithoutFeedback>
     );
 }
 
 const styles = StyleSheet.create({
-    // ... (Styles không thay đổi)
-    container: {
-        flex: 1,
-        backgroundColor: '#334455',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    card: {
-        width: '90%',
-        maxWidth: 400,
-        padding: 30,
-        backgroundColor: 'white',
-        borderRadius: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.1,
-        shadowRadius: 6,
-        elevation: 8,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 8,
-        textAlign: 'center',
-        color: '#333',
-    },
-    subtitle: {
-        fontSize: 14,
-        color: '#666',
-        textAlign: 'center',
-        marginBottom: 25,
-    },
-    input: {
-        height: 45,
-        borderColor: '#ddd',
-        borderWidth: 1,
-        borderRadius: 6,
-        paddingHorizontal: 15,
-        marginBottom: 15,
-        fontSize: 16,
-    },
-    buttonContainer: {
-        marginTop: 10,
-    }
+    container: { flex: 1, backgroundColor: '#f1f5f9' },
+    keyboardView: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    logoContainer: { alignItems: 'center', marginBottom: 40 },
+    logoCircle: { width: 80, height: 80, backgroundColor: '#2563eb', borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+    appName: { fontSize: 28, fontWeight: '800', color: '#1e293b' },
+    welcomeText: { fontSize: 15, color: '#64748b', marginTop: 8 },
+    formContainer: { backgroundColor: '#fff', borderRadius: 20, padding: 24, elevation: 5 },
+    inputWrapper: { marginBottom: 20 },
+    label: { fontSize: 13, fontWeight: '600', color: '#334155', marginBottom: 8 },
+    inputContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, backgroundColor: '#f8fafc', height: 52, paddingHorizontal: 12 },
+    inputIcon: { marginRight: 12 },
+    input: { flex: 1, fontSize: 16, color: '#1e293b', height: '100%' },
+    eyeIcon: { padding: 4 },
+    loginBtn: { backgroundColor: '#2563eb', height: 52, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 10 },
+    disabledBtn: { backgroundColor: '#94a3b8' },
+    loginBtnText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

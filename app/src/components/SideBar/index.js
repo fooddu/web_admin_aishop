@@ -3,7 +3,7 @@ import { Link, useSegments } from 'expo-router';
 import React from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 // Đảm bảo import StyleSheet để dùng hàm flatten
-import { COLORS, LOGOUT_ITEM, MENU_ITEMS } from '../../constants';
+import { COLORS, MENU_ITEMS } from '../../constants';
 
 // --- Component nhỏ: SideBarItem ---
 const SideBarItem = ({ item }) => {
@@ -61,12 +61,7 @@ const SideBar = () => {
           <SideBarItem key={item.name} item={item} />
         ))}
       </View>
-      
-      {/* 3. Logout Item */}
-      <View style={styles.logoutContainer}>
-         <SideBarItem item={LOGOUT_ITEM} />
-      </View>
-      
+
     </View>
   );
 };

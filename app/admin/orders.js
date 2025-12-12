@@ -1,23 +1,33 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Platform, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { Search } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    FlatList,
+    Platform,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    View
+} from 'react-native';
 
-// Import
 import OrderItem from '../src/components/OrderItem';
 import { API_BASE_URL, COLORS } from '../src/constants';
 
 const OrdersScreen = () => {
+  const params = useLocalSearchParams(); 
   const [orders, setOrders] = useState([]);
+  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // 1. Hàm gọi API lấy danh sách đơn hàng (Có Debug)
+  // 1. Fetch Orders API
   const fetchOrders = async () => {
     try {
         const token = await AsyncStorage.getItem('token');
-        console.log("🔍 [DEBUG] Token hiện tại:", token ? "Đã có" : "RỖNG!");
-        console.log("🚀 [DEBUG] Đang gọi API:", `${API_BASE_URL}/orders`);
-
         const response = await fetch(`${API_BASE_URL}/orders`, {
             headers: { 
                 'Authorization': `Bearer ${token}`,
@@ -25,42 +35,60 @@ const OrdersScreen = () => {
             }
         });
 
-        console.log("📡 [DEBUG] Response Status:", response.status);
         const data = await response.json();
 
         if (data.success) {
-            console.log(`✅ [DEBUG] Lấy thành công ${data.data?.length} đơn hàng.`);
-            // Đảo ngược mảng để đơn mới nhất lên đầu (nếu Backend chưa sort)
             const sortedOrders = data.data ? [...data.data].reverse() : [];
             setOrders(sortedOrders);
-        } else {
-            console.warn("⚠️ [DEBUG] API trả về lỗi:", data.message);
+            // Mặc định hiển thị hết
+            setFilteredOrders(sortedOrders); 
         }
     } catch (error) {
-        console.error("🔥 [DEBUG] Lỗi kết nối:", error);
+        console.error("Connection Error:", error);
     } finally {
         setLoading(false);
         setRefreshing(false);
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrders();
+    }, [])
+  );
+
+  // 2. Tự động tìm kiếm khi có Order ID từ Notification
   useEffect(() => {
-    fetchOrders();
-  }, []);
+      if (params?.orderId && orders.length > 0) {
+          console.log("🔔 Notification mở đơn hàng:", params.orderId);
+          setSearchText(params.orderId);
+          handleSearch(params.orderId, orders);
+      }
+  }, [params?.orderId, orders]); 
 
-  // 2. Hàm xử lý Cập nhật trạng thái
+  // 3. Search Function
+  const handleSearch = (text, currentList = orders) => {
+      setSearchText(text);
+      if (text) {
+          const newData = currentList.filter(item => {
+              const idMatch = item._id.toUpperCase().includes(text.toUpperCase());
+              const nameMatch = item.user?.name?.toUpperCase().includes(text.toUpperCase());
+              return idMatch || nameMatch;
+          });
+          setFilteredOrders(newData);
+      } else {
+          setFilteredOrders(currentList);
+      }
+  };
+
+  // 4. Update Status Logic
   const handleUpdateStatus = async (item) => {
-    const statusFlow = {
-        'pending': 'processing',
-        'processing': 'shipped',
-        'shipped': 'delivered'
-    };
-
+    const statusFlow = { 'pending': 'processing', 'processing': 'shipped', 'shipped': 'delivered' };
     const nextStatus = statusFlow[item.status];
     if (!nextStatus) return; 
 
     if (Platform.OS === 'web') {
-        const confirm = window.confirm(`Cập nhật đơn hàng #${item._id.slice(-6)} sang trạng thái "${nextStatus.toUpperCase()}"?`);
+        const confirm = window.confirm(`Update Order #${item._id.slice(-6)} to "${nextStatus.toUpperCase()}"?`);
         if (!confirm) return;
     }
 
@@ -68,27 +96,23 @@ const OrdersScreen = () => {
         const token = await AsyncStorage.getItem('token');
         const response = await fetch(`${API_BASE_URL}/orders/${item._id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ status: nextStatus })
         });
         
         const data = await response.json();
-
         if (data.success) {
-            setOrders(prevOrders => prevOrders.map(order => 
+            const updateList = (list) => list.map(order => 
                 order._id === item._id ? { ...order, status: nextStatus } : order
-            ));
-            if (Platform.OS === 'web') alert("Cập nhật thành công!");
+            );
+            setOrders(prev => updateList(prev));
+            setFilteredOrders(prev => updateList(prev));
+            if (Platform.OS === 'web') alert("Status updated successfully!");
         } else {
-            alert("Lỗi server: " + data.message);
+            alert("Server Error: " + data.message);
         }
-
     } catch (error) {
-        console.error("Lỗi cập nhật:", error);
-        alert("Có lỗi xảy ra.");
+        console.error("Update Error:", error);
     }
   };
 
@@ -99,38 +123,38 @@ const OrdersScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      <View style={styles.headerRow}>
         <View>
-            <Text style={styles.pageTitle}>Quản lý Đơn hàng</Text>
-            <Text style={styles.subTitle}>Theo dõi và cập nhật trạng thái đơn hàng.</Text>
+            <Text style={styles.pageTitle}>Order Management</Text>
+            <Text style={styles.subTitle}>Track and manage customer orders</Text>
         </View>
       </View>
 
-      {/* Danh sách */}
+      <View style={styles.searchContainer}>
+        <Search size={20} color={COLORS.textInactive || '#9ca3af'} style={{marginRight: 10}} />
+        <TextInput 
+            style={styles.searchInput}
+            placeholder="Search by Order ID or Customer..."
+            value={searchText}
+            onChangeText={(t) => handleSearch(t)}
+            placeholderTextColor="#9ca3af"
+        />
+      </View>
+
       {loading ? (
         <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 50 }} />
       ) : (
         <FlatList
-            data={orders}
+            data={filteredOrders}
             keyExtractor={(item) => item._id}
             renderItem={({ item }) => (
-                <OrderItem 
-                    item={item} 
-                    onUpdateStatus={handleUpdateStatus} 
-                />
+                <OrderItem item={item} onUpdateStatus={handleUpdateStatus} />
             )}
             contentContainerStyle={styles.listContainer}
-            refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             ListEmptyComponent={
                 <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyText}>Chưa có đơn hàng nào.</Text>
-                    {/* Hiển thị gợi ý debug nếu rỗng */}
-                    <Text style={{fontSize: 12, color: 'red', marginTop: 10}}>
-                        (Kiểm tra Console Log (F12) để xem chi tiết API)
-                    </Text>
+                    <Text style={styles.emptyText}>No orders found.</Text>
                 </View>
             }
         />
@@ -140,13 +164,15 @@ const OrdersScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f8f9fa' },
-  header: { marginBottom: 20, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: '#eee' },
-  pageTitle: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },
-  subTitle: { fontSize: 14, color: '#6c757d', marginTop: 4 },
+  container: { flex: 1, padding: 24, backgroundColor: '#f8f9fa' },
+  headerRow: { marginBottom: 24 },
+  pageTitle: { fontSize: 28, fontWeight: '800', color: '#111827', marginBottom: 4 },
+  subTitle: { fontSize: 14, color: '#6b7280' },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 12, marginBottom: 24, borderWidth: 1, borderColor: '#e5e7eb', ...Platform.select({ web: { boxShadow: '0 2px 4px rgba(0,0,0,0.02)' } }) },
+  searchInput: { flex: 1, fontSize: 15, color: '#374151', outlineStyle: 'none' },
   listContainer: { paddingBottom: 40 },
-  emptyContainer: { alignItems: 'center', marginTop: 50 },
-  emptyText: { color: '#888', fontSize: 16, fontStyle: 'italic' }
+  emptyContainer: { alignItems: 'center', marginTop: 60 },
+  emptyText: { color: '#9ca3af', fontSize: 16, fontStyle: 'italic' }
 });
 
 export default OrdersScreen;

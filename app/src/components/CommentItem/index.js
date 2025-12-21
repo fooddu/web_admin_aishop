@@ -1,4 +1,4 @@
-import { Eye, EyeOff, MessageCircle, Send, Star, Trash2 } from 'lucide-react-native';
+import { Eye, EyeOff, MessageCircle, Send, Trash2 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { COLORS } from '../../constants';
@@ -23,11 +23,7 @@ const CommentItem = ({ item, onReply, onDelete, onToggleStatus }) => {
              <View style={styles.avatar}><Text style={styles.avatarText}>{item.user?.name?.charAt(0)}</Text></View>
              <View>
                  <Text style={styles.name}>{item.user?.name}</Text>
-                 <View style={{flexDirection: 'row'}}>
-                    {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={12} color={i < item.rating ? "#f59e0b" : "#ddd"} fill={i < item.rating ? "#f59e0b" : "transparent"}/>
-                    ))}
-                 </View>
+                 {/* Star Rating Removed */}
              </View>
           </View>
           {item.product?.image && <Image source={{uri: item.product.image[0]}} style={styles.prodImg} />}

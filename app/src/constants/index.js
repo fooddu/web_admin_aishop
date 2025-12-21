@@ -6,7 +6,7 @@ import { Home, Layers, List, LogOut, Settings, ShoppingBag, Star, Users } from '
 // CẤU HÌNH API
 // ⚠️ LƯU Ý: Nếu chạy trên điện thoại thật, hãy thay 'localhost' bằng IP máy tính (VD: 192.168.1.5)
 const API_IP_ADDRESS = 'http://localhost'; 
-const API_PORT = 4000; 
+const API_PORT = 5000; 
 export const API_BASE_URL = `${API_IP_ADDRESS}:${API_PORT}/api`; 
 
 // HẰNG SỐ MÀU SẮC

@@ -7,9 +7,9 @@ const ProductItemGrid = ({ item, onEdit, onToggleStatus }) => {
   const [isHovered, setIsHovered] = useState(false);
 
   // Format Currency (VND)
-  const formattedPrice = new Intl.NumberFormat('vi-VN', { 
+  const formattedPrice = new Intl.NumberFormat('en-US', { 
       style: 'currency', 
-      currency: 'VND',
+      currency: 'USD',
       minimumFractionDigits: 0, 
       maximumFractionDigits: 0,
   }).format(item.price || 0);

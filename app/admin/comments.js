@@ -73,7 +73,7 @@ const CommentsScreen = () => {
     <View style={styles.container}>
       <View style={styles.header}>
           <Text style={styles.title}>Review Management</Text>
-          <Text style={styles.subtitle}>Moderate customer reviews & ratings</Text>
+          <Text style={styles.subtitle}>Moderate customer reviews</Text>
       </View>
 
       {loading ? <ActivityIndicator size="large" color={COLORS.primary} style={{marginTop: 50}} /> : (

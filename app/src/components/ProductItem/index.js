@@ -6,12 +6,12 @@ import { API_BASE_URL, COLORS } from '../../constants';
 const ProductItemGrid = ({ item, onEdit, onToggleStatus }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Format Currency (VND)
-  const formattedPrice = new Intl.NumberFormat('vi-VN', { 
+  // --- CẬP NHẬT: Format Currency (USD) ---
+  const formattedPrice = new Intl.NumberFormat('en-US', { 
       style: 'currency', 
-      currency: 'VND',
-      minimumFractionDigits: 0, 
-      maximumFractionDigits: 0,
+      currency: 'USD',
+      minimumFractionDigits: 2, 
+      maximumFractionDigits: 2,
   }).format(item.price || 0);
 
   // --- Image URL Helper ---
